@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kunama Academy (KUNACA)</title>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      background: linear-gradient(to right, #4facfe, #00f2fe); 
+      padding: 20px; 
+      margin: 0; 
+      display: flex; 
+      flex-direction: column;
+      align-items: center; 
+    }
+    .container {
+      width: 90%;
+      max-width: 800px;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      color: black;
+      text-align: center;
+    }
+    .search-bar { 
+      width: 100%;
+      padding: 10px; 
+      font-size: 1.2em; 
+      border: 1px solid #007BFF; 
+      border-radius: 8px; 
+      margin-bottom: 20px; 
+    }
+    .results {
+      text-align: left;
+      margin-top: 10px;
+    }
+    .phrase-result { 
+      font-size: 1.5em; 
+      color: #333; 
+      font-weight: bold; 
+      margin-top: 10px; 
+    }
+    .translation-result { 
+      font-size: 1.2em; 
+      color: #007BFF; 
+      font-style: italic; 
+      margin-bottom: 10px; 
+    }
+    .controls {
+      margin-top: 20px;
+    }
+    .add-new-section {
+      display: none;
+      margin-top: 20px;
+    }
+    .add-new-section input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      font-size: 1em;
+      border: 1px solid #007BFF;
+      border-radius: 8px;
+    }
+    button { 
+      font-size: 1em; 
+      padding: 10px 20px; 
+      border: none; 
+      border-radius: 8px; 
+      background-color: #007BFF; 
+      color: white; 
+      cursor: pointer; 
+      transition: 0.3s; 
+    }
+    button:hover { background-color: #0056b3; transform: scale(1.05); }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Kunama Academy (KUNACA)</h1>
+    <input type="text" id="searchInput" class="search-bar" placeholder="Search a phrase..." oninput="searchPhrase()">
+    <div id="results" class="results"></div>
+
+    <div class="controls">
+      <input type="checkbox" id="addNewCheck"> <label for="addNewCheck">Add New Phrase</label>
+      <div id="addNewSection" class="add-new-section">
+        <input type="text" id="newPhrase" placeholder="Enter new phrase">
+        <input type="text" id="newTranslation" placeholder="Enter translation">
+        <button onclick="addNewPhrase()">Submit</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbzaavkbLTqwSFQNNDpmIkrTKohUJxm283ztQ74w2rgMWRdKHpdTKx8OXzNEpNihtWM2HA/exec";  // Replace with your Google Apps Script URL
+
+    // Show/hide add new phrase section
+    document.getElementById("addNewCheck").addEventListener("change", function() {
+      document.getElementById("addNewSection").style.display = this.checked ? "block" : "none";
+    });
+
+    function searchPhrase() {
+      const query = document.getElementById("searchInput").value.trim().toLowerCase();
+      if (!query) {
+        document.getElementById("results").innerHTML = ""; 
+        return;
+      }
+
+      fetch(`${API_URL}?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+          const resultsContainer = document.getElementById("results");
+          resultsContainer.innerHTML = "";
+          if (data.length === 0) {
+            resultsContainer.innerHTML = "<p>No results found.</p>";
+            return;
+          }
+          data.forEach(item => {
+            const phraseEl = document.createElement("div");
+            phraseEl.classList.add("phrase-result");
+            phraseEl.textContent = item.phrase;
+
+            const translationEl = document.createElement("div");
+            translationEl.classList.add("translation-result");
+            translationEl.textContent = item.translation;
+
+            resultsContainer.appendChild(phraseEl);
+            resultsContainer.appendChild(translationEl);
+          });
+        })
+        .catch(error => console.error("Error fetching data:", error));
+    }
+
+    function addNewPhrase() {
+  const phrase = document.getElementById("newPhrase").value.trim();
+  const translation = document.getElementById("newTranslation").value.trim();
+
+  if (!phrase || !translation) {
+    alert("Please enter both a phrase and translation.");
+    return;
+  }
+
+  console.log("Adding new phrase:", phrase, "Translation:", translation); // Debugging log
+
+  fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ phrase, translation })
+  })
+  .then(response => {
+    console.log("Response status:", response.status); // Debugging log
+    return response.text();
+  })
+  .then(data => {
+    console.log("Response data:", data); // Debugging log
+    if (data === "Success") {
+      alert("Phrase added successfully!");
+      document.getElementById("newPhrase").value = "";
+      document.getElementById("newTranslation").value = "";
+    } else {
+      alert("Error: " + data);
+    }
+  })
+  .catch(error => {
+    console.error("Error:", error); // Log any errors
+    alert("Error: " + error.message);
+  });
+}
+  </script>
+
+</body>
+</html>
